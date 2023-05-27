@@ -29,7 +29,6 @@ import net.minecraft.inventory.IInventory;
 import net.minecraft.inventory.InventoryEnderChest;
 import net.minecraft.item.ItemStack;
 
-import com.gtnewhorizon.gtnhlib.util.map.ItemStackMap;
 import com.gtnewhorizon.structurelib.util.InventoryUtility.ItemStackExtractor.APIType;
 import com.gtnewhorizon.structurelib.util.ItemStackPredicate.NBTMode;
 

@@ -427,8 +427,6 @@ repositories.configureEach { repo ->
     }
 }
 
-apply from: 'repositories.gradle'
-
 configurations {
     for (config in [compileClasspath, runtimeClasspath, testCompileClasspath, testRuntimeClasspath]) {
         config.extendsFrom(runtimeOnlyNonPublishable)
