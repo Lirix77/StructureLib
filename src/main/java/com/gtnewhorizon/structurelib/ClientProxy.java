@@ -2,21 +2,14 @@ package com.gtnewhorizon.structurelib;
 
 import static com.gtnewhorizon.structurelib.StructureLib.RANDOM;
 
-import com.gtnewhorizon.structurelib.entity.fx.WeightlessParticleFX;
-import com.gtnewhorizon.structurelib.net.SetChannelDataMessage;
-import cpw.mods.fml.common.FMLCommonHandler;
-import cpw.mods.fml.common.event.FMLPreInitializationEvent;
-import cpw.mods.fml.common.eventhandler.SubscribeEvent;
-import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
-import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 import java.util.*;
+
 import net.minecraft.block.Block;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiNewChat;
 import net.minecraft.client.particle.EntityFX;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.client.renderer.culling.Frustrum;
-import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.EntityPlayer;
@@ -31,12 +24,22 @@ import net.minecraft.world.World;
 import net.minecraftforge.client.event.RenderWorldLastEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.WorldEvent;
+
 import org.lwjgl.opengl.GL11;
+
+import com.gtnewhorizon.structurelib.entity.fx.WeightlessParticleFX;
+import com.gtnewhorizon.structurelib.net.SetChannelDataMessage;
+
+import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.event.FMLPreInitializationEvent;
+import cpw.mods.fml.common.eventhandler.SubscribeEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.ClientTickEvent;
+import cpw.mods.fml.common.gameevent.TickEvent.Phase;
 
 public class ClientProxy extends CommonProxy {
 
-    private static final short[] RGBA_NO_TINT = {255, 255, 255, 255};
-    private static final short[] RGBA_RED_TINT = {255, 128, 128, 0};
+    private static final short[] RGBA_NO_TINT = { 255, 255, 255, 255 };
+    private static final short[] RGBA_RED_TINT = { 255, 128, 128, 0 };
     private static final Map<HintParticleInfo, HintGroup> allHints = new HashMap<>();
     /**
      * All batches of hints.
@@ -55,11 +58,10 @@ public class ClientProxy extends CommonProxy {
      */
     private static final List<HintParticleInfo> allHintsForRender = new ArrayList<>(10000);
     /**
-     * If the diff to current player position is too great sort the allHints.
-     * Initial value is very far off below y=0 but not huge enough to make a NaN.
+     * If the diff to current player position is too great sort the allHints. Initial value is very far off below y=0
+     * but not huge enough to make a NaN.
      * <p>
-     * We are using this supposedly immutable object as a mutable object here.
-     * So be aware.
+     * We are using this supposedly immutable object as a mutable object here. So be aware.
      */
     private static final Vec3 lastPlayerPos = Vec3.createVectorHelper(0, -1e30, 0);
     /**
@@ -158,11 +160,7 @@ public class ClientProxy extends CommonProxy {
     }
 
     @Override
-    public void addThrottledChat(
-            Object throttleKey,
-            EntityPlayer player,
-            IChatComponent text,
-            short intervalRequired,
+    public void addThrottledChat(Object throttleKey, EntityPlayer player, IChatComponent text, short intervalRequired,
             boolean forceUpdateLastSend) {
         if (player instanceof EntityPlayerMP)
             super.addThrottledChat(throttleKey, player, text, intervalRequired, forceUpdateLastSend);
@@ -250,6 +248,7 @@ public class ClientProxy extends CommonProxy {
     }
 
     private static class HintGroup {
+
         private final List<HintParticleInfo> hints = new LinkedList<>();
         private int creationTime = -1;
 
@@ -267,13 +266,10 @@ public class ClientProxy extends CommonProxy {
     }
 
     private static class HintParticleInfo {
+
         private final World w;
         // these are the block coordinate for e.g. w.getBlock()
         private final int x, y, z;
-        // these are the lower bounds for rendering. the upper bound would be X + size
-        // currently size is fixed to be 0.5
-        // it is not made into a constants because this will allow for easy changing during debug
-        private final double X, Y, Z;
         private final IIcon[] icons;
         private short[] tint;
         private boolean renderThrough;
@@ -285,9 +281,6 @@ public class ClientProxy extends CommonProxy {
             this.x = x;
             this.y = y;
             this.z = z;
-            X = x + 0.25;
-            Y = y + 0.25;
-            Z = z + 0.25;
             this.icons = icons;
             this.tint = tint;
         }
@@ -323,10 +316,11 @@ public class ClientProxy extends CommonProxy {
         }
 
         public boolean isInFrustrum(Frustrum frustrum) {
-            return frustrum.isBoxInFrustum(X, Y, Z, X + 0.5, Y + 0.5, Z + 0.5);
+            return frustrum.isBoxInFrustum(x + 0.25, y + 0.25, z + 0.25, x + 0.75, y + 0.75, z + 0.75);
         }
 
-        public void draw(Tessellator tes, double eyeX, double eyeY, double eyeZ) {
+        public void draw(Tessellator tes, double eyeX, double eyeY, double eyeZ, int eyeXint, int eyeYint,
+                int eyeZint) {
             double size = 0.5;
 
             int brightness = w.blockExists(x, 0, z) ? w.getLightBrightnessForSkyBlocks(x, y, z, 0) : 0;
@@ -337,6 +331,10 @@ public class ClientProxy extends CommonProxy {
                     (int) (tint[1] * .95F),
                     (int) (tint[2] * 1F),
                     ConfigurationHandler.INSTANCE.getHintTransparency());
+
+            double X = (x - eyeXint) + 0.25;
+            double Y = (y - eyeYint) + 0.25;
+            double Z = (z - eyeZint) + 0.25;
 
             for (int i = 0; i < 6; i++) {
                 if (icons[i] == null) continue;
@@ -361,7 +359,9 @@ public class ClientProxy extends CommonProxy {
                             tes.addVertexWithUV(X, Y, Z + size, u, V);
                             tes.addVertexWithUV(X, Y, Z, u, v);
                             tes.addVertexWithUV(X + size, Y, Z, U, v);
+                            tes.addVertexWithUV(X + size, Y, Z, U, v);
                             tes.addVertexWithUV(X + size, Y, Z + size, U, V);
+                            tes.addVertexWithUV(X, Y, Z + size, u, V);
                             break;
                         case 1:
                             if ((Y + size <= eyeY) != (j == 1)) continue;
@@ -369,7 +369,9 @@ public class ClientProxy extends CommonProxy {
                             tes.addVertexWithUV(X, Y + size, Z, u, v);
                             tes.addVertexWithUV(X, Y + size, Z + size, u, V);
                             tes.addVertexWithUV(X + size, Y + size, Z + size, U, V);
+                            tes.addVertexWithUV(X + size, Y + size, Z + size, U, V);
                             tes.addVertexWithUV(X + size, Y + size, Z, U, v);
+                            tes.addVertexWithUV(X, Y + size, Z, u, v);
                             break;
                         case 2:
                             if ((Z >= eyeZ) != (j == 1)) continue;
@@ -377,7 +379,9 @@ public class ClientProxy extends CommonProxy {
                             tes.addVertexWithUV(X, Y, Z, U, V);
                             tes.addVertexWithUV(X, Y + size, Z, U, v);
                             tes.addVertexWithUV(X + size, Y + size, Z, u, v);
+                            tes.addVertexWithUV(X + size, Y + size, Z, u, v);
                             tes.addVertexWithUV(X + size, Y, Z, u, V);
+                            tes.addVertexWithUV(X, Y, Z, U, V);
                             break;
                         case 3:
                             if ((Z <= eyeZ) != (j == 1)) continue;
@@ -385,7 +389,9 @@ public class ClientProxy extends CommonProxy {
                             tes.addVertexWithUV(X + size, Y, Z + size, U, V);
                             tes.addVertexWithUV(X + size, Y + size, Z + size, U, v);
                             tes.addVertexWithUV(X, Y + size, Z + size, u, v);
+                            tes.addVertexWithUV(X, Y + size, Z + size, u, v);
                             tes.addVertexWithUV(X, Y, Z + size, u, V);
+                            tes.addVertexWithUV(X + size, Y, Z + size, U, V);
                             break;
                         case 4:
                             if ((X >= eyeX) != (j == 1)) continue;
@@ -393,7 +399,9 @@ public class ClientProxy extends CommonProxy {
                             tes.addVertexWithUV(X, Y, Z + size, U, V);
                             tes.addVertexWithUV(X, Y + size, Z + size, U, v);
                             tes.addVertexWithUV(X, Y + size, Z, u, v);
+                            tes.addVertexWithUV(X, Y + size, Z, u, v);
                             tes.addVertexWithUV(X, Y, Z, u, V);
+                            tes.addVertexWithUV(X, Y, Z + size, U, V);
                             break;
                         case 5:
                             if ((X + size <= eyeX) != (j == 1)) continue;
@@ -401,7 +409,9 @@ public class ClientProxy extends CommonProxy {
                             tes.addVertexWithUV(X + size, Y, Z, U, V);
                             tes.addVertexWithUV(X + size, Y + size, Z, U, v);
                             tes.addVertexWithUV(X + size, Y + size, Z + size, u, v);
+                            tes.addVertexWithUV(X + size, Y + size, Z + size, u, v);
                             tes.addVertexWithUV(X + size, Y, Z + size, u, V);
+                            tes.addVertexWithUV(X + size, Y, Z, U, V);
                             break;
                     }
                 }
@@ -413,11 +423,12 @@ public class ClientProxy extends CommonProxy {
         }
 
         public double getSquareDistanceTo(Vec3 point) {
-            return point.squareDistanceTo(X, Y, Z);
+            return point.squareDistanceTo(x + 0.5, y + 0.5, z + 0.5);
         }
     }
 
     public static class FMLEventHandler {
+
         private void resetPlayerLocation() {
             lastPlayerPos.xCoord = Minecraft.getMinecraft().thePlayer.posX;
             lastPlayerPos.yCoord = Minecraft.getMinecraft().thePlayer.posY;
@@ -466,6 +477,7 @@ public class ClientProxy extends CommonProxy {
     }
 
     public static class ForgeEventHandler {
+
         @SubscribeEvent
         public void onWorldLoad(WorldEvent.Load e) {
             if (e.world.isRemote) {
@@ -498,6 +510,7 @@ public class ClientProxy extends CommonProxy {
                     + (entitylivingbase.posY - entitylivingbase.lastTickPosY) * e.partialTicks;
             double d2 = entitylivingbase.lastTickPosZ
                     + (entitylivingbase.posZ - entitylivingbase.lastTickPosZ) * e.partialTicks;
+            int i0 = (int) d0, i1 = (int) d1, i2 = (int) d2;
             frustrum.setPosition(d0, d1, d2);
 
             GL11.glPushMatrix();
@@ -510,25 +523,35 @@ public class ClientProxy extends CommonProxy {
             // depth test begin as enabled
             boolean renderThrough = false;
             Minecraft.getMinecraft().renderEngine.bindTexture(TextureMap.locationBlocksTexture);
-            GL11.glTranslated(-RenderManager.renderPosX, -RenderManager.renderPosY, -RenderManager.renderPosZ);
+            GL11.glTranslated(-d0 + i0, -d1 + i1, -d2 + i2);
             Tessellator tes = Tessellator.instance;
-            tes.startDrawingQuads();
-            for (int i = 0, allHintsForRenderSize = allHintsForRender.size(); i < allHintsForRenderSize; i++) {
+            tes.startDrawing(GL11.GL_TRIANGLES);
+            for (int i = 0, allHintsForRenderSize = allHintsForRender.size(), cubeDrawn = 0; i
+                    < allHintsForRenderSize; i++, cubeDrawn++) {
                 HintParticleInfo hint = allHintsForRender.get(i);
                 if (!hint.isInFrustrum(frustrum)) continue;
                 if (renderThrough != hint.renderThrough) {
                     if (i > 0) {
                         p.endStartSection("Draw");
                         tes.draw();
-                        tes.startDrawingQuads();
+                        tes.startDrawing(GL11.GL_TRIANGLES);
+                        cubeDrawn = 0;
                         p.endStartSection("Prepare");
                     }
                     if (hint.renderThrough) GL11.glDisable(GL11.GL_DEPTH_TEST);
                     else GL11.glEnable(GL11.GL_DEPTH_TEST);
                     renderThrough = hint.renderThrough;
                 }
+                // Minecraft Tessellator draw in batch of 4096. This plays nicely with quads, but for trigs
+                // it might occasionally end up with one half in first batch and the other half in later batch.
+                // so we manually flush the buffer here if that would happen.
+                // 6 faces per particle, 2 trig per face, 3 vertex per trig
+                if ((cubeDrawn + 1) >= 4096 / (6 * 2 * 3)) {
+                    tes.draw();
+                    tes.startDrawing(GL11.GL_TRIANGLES);
+                }
                 // TODO verify if we need to add eyeHeight
-                hint.draw(tes, d0, d1, d2);
+                hint.draw(tes, d0, d1, d2, i0, i1, i2);
             }
             p.endStartSection("Draw");
             tes.draw();
