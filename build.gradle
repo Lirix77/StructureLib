@@ -328,7 +328,7 @@ catch (Exception ignored) {
     versionOverride = 'NO-GIT-TAG-SET'
     identifiedVersion = versionOverride
 }
-version = identifiedVersion
+version = ""
 ext {
     modVersion = identifiedVersion
 }
@@ -617,7 +617,7 @@ if (usesMixins.toBoolean()) {
 
 tasks.named("processResources", ProcessResources).configure {
     // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
+    inputs.property "version", "1.2.9"
     inputs.property "mcversion", project.minecraft.mcVersion
     exclude("spotless.gradle")
 
